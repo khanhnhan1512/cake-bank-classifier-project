@@ -6,10 +6,11 @@ readme = "README.md"
 authors = [
     { name = "mdop297", email = "lenhatminh297@gmail.com" }
 ]
-requires-python = ">=3.13"
+requires-python = ">=3.10"
 dependencies = [
     "pandas>=2.3.3",
 ]
+
 
 [project.scripts]
 classifier = "classifier:main"

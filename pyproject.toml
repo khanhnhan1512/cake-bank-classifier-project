@@ -7,7 +7,9 @@ authors = [
     { name = "mdop297", email = "lenhatminh297@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "pandas>=2.3.3",
+]
 
 [project.scripts]
 classifier = "classifier:main"

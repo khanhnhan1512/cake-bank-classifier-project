@@ -2,7 +2,7 @@ Data Link:
 
 https://drive.google.com/file/d/1Y_6TfutXPg42HwMCZBlrjSZSxy0vEpC2/view
 
-Section 1: Building a Liveness Classifier (40 points)
+# Section 1: Building a Liveness Classifier (40 points)
 
 In face verification services such as eKYC and access control, ensuring that a presented face is from a live person rather than a spoofed artifact (e.g., printed photos, digital screens, masks, or deepfake videos) is a critical challenge. This problem, known as liveness detection, aims to distinguish between real and fake facial inputs to enhance security and prevent fraud.
 
@@ -18,7 +18,7 @@ Load and preprocess the dataset. Choose an appropriate model architecture. Train
 
 --
 
-Section 2: Report on Model Performance (30 points)
+# Section 2: Report on Model Performance (30 points)
 
 Task: Write a brief report covering the following aspects:
 
@@ -32,7 +32,7 @@ Propose alternative techniques that might improve the classifier.
 
 --
 
-Section 3: Designing a Robust Fraud Detection System (30 points)
+# Section 3: Designing a Robust Fraud Detection System (30 points)
 
 Task:
 
@@ -48,4 +48,6 @@ Discuss potential challenges and how to mitigate them. Present a high-level arch
 
 --
 
-Submission Guidelines: Provide code in a Jupyter Notebook or a Python script. Submit a PDF report for Sections 2 & 3. Ensure code is well-documented and readable. Include necessary dependencies and instructions for running the code.
+# Submission Guidelines
+
+Provide code in a Jupyter Notebook or a Python script. Submit a PDF report for Sections 2 & 3. Ensure code is well-documented and readable. Include necessary dependencies and instructions for running the code.

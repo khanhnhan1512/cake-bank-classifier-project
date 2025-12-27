@@ -32,7 +32,7 @@ class LivenessDataset(Dataset):
       image = self.transform(image)
     else:
       transform = Compose([
-        transforms.Resize((224, 224)),
+        transforms.Resize((260, 260)),
         transforms.ToTensor()
       ])
       image = transform(image)

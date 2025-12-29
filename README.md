@@ -94,17 +94,19 @@ Step 2: Activate the environment:
 ```
 .venv\Scripts\activate
 ```
-Step 3: Data Preprocessing
+Step 3: Put 3 raw dataset folders `train`, `dev` and `test` in the `data/raw/` folder.
+
+Step 4: Data Preprocessing
 
 You must run this step first to generate the data/processed folder.
 ```
 python src/classifier/preprocess.py
 ```
-Step 4: Train the model
+Step 5: Train the model
 ```
 python src/classifier/train.py
 ```
-Step 5: Inference on a single image
+Step 6: Inference on a single image
 ```
 python src/classifier/predict.py --image path/to/your/image.jpg
 ```

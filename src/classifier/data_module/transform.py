@@ -6,23 +6,23 @@ INPUT_SIZE = (224, 224)
 
 def get_transforms(phase: str):
     """
-    Trả về transform pipeline tương ứng với phase: 'train' hoặc 'val'
+    Returns the transform pipeline corresponding to the phase: 'train' or 'val'.
     """
     if phase == 'train':
         return transforms.Compose([
-            # 1. Geometric
+            # Geometric
             transforms.RandomResizedCrop(INPUT_SIZE, scale=(0.8, 1.0)), 
             transforms.RandomHorizontalFlip(p=0.5),
             transforms.RandomRotation(degrees=15),
             
-            # 2. Photometric (Chỉ train mới dùng)
+            # Photometric 
             transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.05),
             
-            # 3. Standardize
+            # Standardize
             transforms.ToTensor(),
             transforms.Normalize(mean=IMAGENET_MEAN, std=IMAGENET_STD),
             
-            # 4. Regularization
+            # Regularization
             transforms.RandomErasing(p=0.1) 
         ])
     

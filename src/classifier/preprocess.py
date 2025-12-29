@@ -6,41 +6,33 @@ from tqdm import tqdm
 from PIL import Image, ImageOps
 import mediapipe as mp
 
-# --- CONFIGURATION ---
-# Base project path (relative to where the script is executed)
-# Assuming run from project root: uv run src/classifier/preprocess.py
+# CONFIGURATION 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"
 PROCESSED_DATA_DIR = PROJECT_ROOT / "data" / "processed"
 
 # Crop settings
-SCALE = 1.6       # Expand the box by 1.3x to include context (ears, neck, phone bezel)
+SCALE = 1.6       
 IMAGE_SIZE = 224  # Output size for EfficientNet/MobileNet
 
 # Initialize MediaPipe Face Detection
 mp_face_detection = mp.solutions.face_detection
-# model_selection=1: Optimized for full-range images (better than 0 which is for selfies)
-# min_detection_confidence=0.3: Lower threshold to detect masked or occluded faces
 face_detection = mp_face_detection.FaceDetection(model_selection=1, min_detection_confidence=0.3)
 
 def create_dir(path):
-    """Create directory if it does not exist."""
     if not os.path.exists(path):
         os.makedirs(path)
 
 def get_face_box_robust(pil_image):
     """
-    Brute-force Rotation Strategy:
     Try detecting at 0 degrees. If failed -> Rotate 90 -> 180 -> 270.
-    Returns: (best_box, best_rotated_image)
     """
     rotations = [0, 90, 180, 270]
     
-    # Attempt to fix orientation based on EXIF data first
-    try:
-        pil_image = ImageOps.exif_transpose(pil_image)
-    except Exception:
-        pass
+    # try:
+    #     pil_image = ImageOps.exif_transpose(pil_image)
+    # except Exception:
+    #     pass
 
     for angle in rotations:
         if angle == 0:
@@ -57,7 +49,7 @@ def get_face_box_robust(pil_image):
             max_area = 0
             best_box = None
             
-            # Find the largest face (Primary Subject)
+            # Find the largest face 
             for detection in results.detections:
                 bboxC = detection.location_data.relative_bounding_box
                 x1 = int(bboxC.xmin * w_img)
@@ -84,18 +76,16 @@ def process_image(img_path, save_path):
     try:
         img = Image.open(img_path).convert('RGB')
         
-        # 1. Smart Detection (Auto-rotation)
         box, correct_img = get_face_box_robust(img)
         
         if box is not None:
-            # 2. Calculate Square Crop
+            # Calculate Square Crop
             x1, y1, x2, y2 = box
             w_box = x2 - x1
             h_box = y2 - y1
             cx, cy = x1 + w_box//2, y1 + h_box//2
             
             # Scale up to capture context
-            # Use the largest dimension to ensure a square crop
             size = int(max(w_box, h_box) * SCALE)
             
             left = max(0, cx - size//2)
@@ -108,13 +98,12 @@ def process_image(img_path, save_path):
             
             # Save
             img_final.save(save_path, quality=95)
-            return True # Success
+            return True 
         else:
-            # Fallback: Resize original image if detection fails
-            # This ensures we don't lose data, even if it's noisy
+            # Resize original image if detection fails
             img_final = img.resize((IMAGE_SIZE, IMAGE_SIZE))
             img_final.save(save_path, quality=95)
-            return False # Failed detection
+            return False
             
     except Exception as e:
         print(f"Error processing {img_path}: {e}")
@@ -130,7 +119,7 @@ def main():
         print("Removing old processed directory...")
         shutil.rmtree(PROCESSED_DATA_DIR)
     
-    # Count total files for progress bar
+    # Count total files 
     total_files = 0
     success_count = 0
     
@@ -141,12 +130,9 @@ def main():
 
     print(f"Total images found: {total_files}")
     
-    # Use tqdm for progress tracking
     with tqdm(total=total_files, desc="Processing") as pbar:
         for file_path in RAW_DATA_DIR.rglob("*"):
             if file_path.suffix.lower() in ['.jpg', '.jpeg', '.png', '.bmp', '.webp']:
-                # preserve directory structure
-                # Example: data/raw/train/normal/1.jpg -> data/processed/train/normal/1.jpg
                 relative_path = file_path.relative_to(RAW_DATA_DIR)
                 output_path = PROCESSED_DATA_DIR / relative_path
                 

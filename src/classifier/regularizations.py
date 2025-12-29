@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 class EarlyStopping:
-    """Dừng training sớm nếu validation loss không giảm sau một khoảng patience."""
+    """Stops training early if validation loss doesn't improve after a given patience."""
     def __init__(self, patience=7, verbose=False, delta=0.0, path='checkpoint.pt', trace_func=print):
         self.patience = patience
         self.verbose = verbose
@@ -15,28 +15,27 @@ class EarlyStopping:
         self.trace_func = trace_func
 
     def __call__(self, val_loss, model):
-        score = -val_loss # Chuyển loss thành score (càng lớn càng tốt để dễ so sánh)
+        score = -val_loss 
 
         if self.best_score is None:
             self.best_score = score
-            self.save_checkpoint(val_loss, model) # <--- QUAN TRỌNG: Lưu lần đầu
+            self.save_checkpoint(val_loss, model) 
         elif score < self.best_score + self.delta:
-            # Loss không giảm đủ nhiều (Score không tăng)
+            # Loss did not improve enough (Score did not increase)
             self.counter += 1
             self.trace_func(f'EarlyStopping counter: {self.counter} out of {self.patience}')
             if self.counter >= self.patience:
                 self.early_stop = True
         else:
-            # Loss giảm tốt -> Reset counter và LƯU MODEL
+            # Loss improved -> Reset counter and SAVE MODEL
             self.best_score = score
-            self.save_checkpoint(val_loss, model) # <--- QUAN TRỌNG: Lưu khi cải thiện
+            self.save_checkpoint(val_loss, model) # IMPORTANT: Save when improved
             self.counter = 0
 
     def save_checkpoint(self, val_loss, model):
-        '''Lưu model khi validation loss giảm.'''
         if self.verbose:
-            self.trace_func(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}).  Saving model ...')
+            self.trace_func(f'Validation loss decreased ({self.val_loss_min:.6f} --> {val_loss:.6f}). Saving model ...')
         
-        # Lưu state_dict (weight) thay vì cả model
+        # Save state_dict (weights) instead of the entire model
         torch.save(model.state_dict(), self.path)
         self.val_loss_min = val_loss

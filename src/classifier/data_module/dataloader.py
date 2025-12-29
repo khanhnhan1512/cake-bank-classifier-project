@@ -5,13 +5,11 @@ import torch
 import numpy as np
 import random
 
-# Import class Dataset cũ của bạn
 from classifier.data_module.dataset import LivenessDataset
-# Import hàm transforms vừa tạo ở trên
 from classifier.data_module.transform import get_transforms
 
 def seed_worker(worker_id):
-    """Hàm gieo seed riêng cho từng worker con"""
+    """Seed generator for individual workers."""
     worker_seed = torch.initial_seed() % 2**32
     np.random.seed(worker_seed)
     random.seed(worker_seed)
@@ -29,34 +27,27 @@ class LivenessDataLoader:
         self.test_path = test_path
         self.samples_path = samples_path
         self.batch_size = batch_size
-        
-        # Cấu hình phần cứng (Tối ưu cho GPU)
-        # num_workers: Số luồng CPU load ảnh. Thường set = 2 hoặc 4.
         self.num_workers = 2 
         self.pin_memory = True 
 
     def setup(self, stage: Literal['samples', 'fit', 'test']):
         if stage == 'fit':
-            # Train: Dùng transform 'train' (có Augmentation)
             self.train_dataset = LivenessDataset(
                 self.train_path, 
                 transform=get_transforms('train')
             )
-            # Dev: Dùng transform 'val' (Chỉ Resize + Norm)
             self.dev_dataset = LivenessDataset(
                 self.dev_path, 
                 transform=get_transforms('val')
             )
             
         elif stage == 'test':
-            # Test: Dùng transform 'val'
             self.test_dataset = LivenessDataset(
                 self.test_path, 
                 transform=get_transforms('val')
             )
             
         elif stage == 'samples':
-            # Samples: Dùng transform 'val' để visualize chuẩn input model
             self.samples_dataset = LivenessDataset(
                 self.samples_path, 
                 transform=get_transforms('val')

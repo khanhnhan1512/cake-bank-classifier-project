@@ -20,7 +20,6 @@ DATA_DIR = PROJECT_ROOT / "data" / "processed"
 TRAIN_DIR = DATA_DIR / "train"
 DEV_DIR = DATA_DIR / "dev"
 TEST_DIR = DATA_DIR / "test"
-SAMPLE_DIR = PROJECT_ROOT / "data" / "raw" / "samples" 
 
 # Model save directory
 MODELS_DIR = PROJECT_ROOT / "models"
@@ -108,7 +107,6 @@ def main():
         train_path=TRAIN_DIR,
         dev_path=DEV_DIR,
         test_path=TEST_DIR,
-        samples_path=SAMPLE_DIR,
         batch_size=BATCH_SIZE
     )
     print("Loading datasets...")

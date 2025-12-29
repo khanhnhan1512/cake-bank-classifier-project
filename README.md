@@ -86,7 +86,7 @@ This project uses `uv` for extremely fast and reliable package management.
 - Install `uv`.
 - Python 3.10+ environment.
 #### Steps:
-Step 1: Open terminal in project root directory and synchronize dependencies:
+Step 1: Open terminal in project root directory `section_1_code` and synchronize dependencies:
 ```
 uv sync
 ```

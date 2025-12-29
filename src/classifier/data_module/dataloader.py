@@ -19,13 +19,11 @@ class LivenessDataLoader:
                  train_path: Path,
                  dev_path: Path,
                  test_path: Path,
-                 samples_path: Path, 
                  batch_size=32):
         
         self.train_path = train_path
         self.dev_path = dev_path
         self.test_path = test_path
-        self.samples_path = samples_path
         self.batch_size = batch_size
         self.num_workers = 2 
         self.pin_memory = True 

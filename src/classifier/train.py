@@ -32,7 +32,7 @@ BEST_MODEL_PATH = MODELS_DIR / "best_model.pth"
 
 # Hyperparameters
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-NUM_EPOCHS = 10
+NUM_EPOCHS = 20
 BATCH_SIZE = 32
 LEARNING_RATE = 1e-3
 ETA_MIN = 1e-4
@@ -135,7 +135,7 @@ def main():
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=NUM_EPOCHS, eta_min=ETA_MIN)
-    early_stopping = EarlyStopping(patience=5, delta=0.001, path=str(BEST_MODEL_PATH), verbose=True)
+    early_stopping = EarlyStopping(patience=5, delta=0.0, path=str(BEST_MODEL_PATH), verbose=True)
 
     # 3. Training Loop
     print("\nBegin Training Loop:")

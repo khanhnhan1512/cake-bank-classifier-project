@@ -1,72 +1,78 @@
 # Liveness Detection System (Section 1)
 
 ## 1. Project Overview
-This project develops an AI model to distinguish between real faces (Live) and spoofed faces (Fake/Spoof) using Deep Learning.
+This project develops an AI model to distinguish between **Real faces (Live)** and **Spoofed faces (Fake)** using Deep Learning. The goal is to enhance security in eKYC systems by detecting attacks such as printed photos, screen replays, or masks.
+
 - **Input:** RGB Images.
 - **Output:** Liveness Score [0, 1] (0 = Real, 1 = Spoof).
+- **Environment:** Managed by `uv` (Modern Python package manager).
 
-## 2. Methodology & Rationale (Giải thích lựa chọn)
+## 2. System Specifications
+The development and training were conducted on the following hardware:
+- **OS:** Windows 10/11
+- **CPU:** (Standard Desktop CPU)
+- **RAM:** 16GB
+- **GPU:** NVIDIA GeForce RTX 3070Ti (8GB VRAM)
+- **Python Version:** 3.10+
 
-### A. Data Preprocessing (Crucial Step)
-We observed that using raw images directly leads to "Data Leakage" where the model learns background noise (e.g., dark rooms, screen borders) instead of facial features.
-- **Solution:** We implemented a robust Face Detection & Cropping pipeline using **OpenCV Haar Cascade**.
-- **Scale Strategy:** Instead of tight cropping, we used a **Scale Factor of 1.6**.
-    - *Rationale:* Expanding the crop allows the model to see context clues like phone bezels, paper edges, or lack of depth at the ears/neck, significantly improving Recall on Spoof attacks (from ~87% to ~97%).
-- **Split:** Train/Dev/Test splits are consistent to ensure fair evaluation.
+## 3. Workflow & Rationale (Methodology)
 
-### B. Model Architecture
+Our approach follows a strict Data Engineering & ML pipeline:
+
+### Step 1: Exploratory Data Analysis (EDA)
+Before any modeling, we analyzed the dataset distribution in `notebooks/check_quality.ipynb`.
+- **Action:** Checked for class imbalance between "Normal" and "Spoof" samples.
+- **Rationale:** Understanding class distribution determines the choice of Loss Function. Since the dataset was relatively balanced, we opted for **CrossEntropyLoss** instead of Focal Loss to ensure faster convergence without bias.
+
+### Step 2: Data Preprocessing (Crucial Improvement)
+We implemented a custom pipeline in `src/classifier/preprocess.py`.
+- **Face Detection:** We utilized **Google MediaPipe Face Detection** (BlazeFace).
+    - *Rationale:* MediaPipe is significantly more robust than traditional OpenCV Haar Cascades, especially for faces with occlusions (masks), extreme angles, or varying lighting conditions, ensuring high-quality input for the model.
+- **Scale Strategy (The "Secret Sauce"):** Instead of tight face cropping, we used a **Scale Factor of 1.6**.
+    - *Rationale:* Initial experiments with tight crops (Scale 1.3) yielded lower Recall (~87%). Expanding the crop (Scale 1.6) allows the model to see **context clues** (e.g., phone bezels, paper edges, lack of depth at the neck/ears). This simple change boosted Recall to **~97%**.
+- **Data Split:** Consistent Train/Dev/Test splits to prevent data leakage.
+
+### Step 3: Model Architecture
 We selected **EfficientNet-B2** with Transfer Learning (ImageNet weights).
-- *Rationale:* EfficientNet provides a better accuracy-to-latency ratio than older models like ResNet50 or VGG. B2 is chosen as a "sweet spot" for feature extraction depth without being too heavy for potential edge deployment.
-- **Loss Function:** CrossEntropyLoss (Standard and effective for balanced data).
+- **Rationale:** EfficientNet-B2 offers an optimal balance between **Accuracy** and **Inference Latency**. It is significantly lighter than ResNet50 but provides deeper feature extraction than MobileNet, making it suitable for potential edge deployment in banking apps.
 
-### C. Training Strategy
-- **Optimizer:** Adam (LR=1e-3) with CosineAnnealing Scheduler for smooth convergence.
-- **Regularization:** - `Dropout (p=0.3)` in the classifier head.
-    - `EarlyStopping` to prevent overfitting.
+### Step 4: Training Strategy
+- **Optimizer:** Adam (LR=1e-3) with CosineAnnealing Scheduler.
+- **Regularization:**
+    - `Weight Decay (1e-4)`: Added to penalize large weights and reduce overfitting.
+    - `Dropout (p=0.3)`: Applied in the classifier head.
+    - `EarlyStopping`: Monitors Validation Loss to stop training at the optimal point.
 - **Metric Focus:** We prioritize **Recall** (catching spoof attacks) over Precision, as missing a spoofer is a security risk.
-
-## 3. Results (Performance)
-Evaluated on the held-out Test Set:
-
-| Metric | Value |
-| :--- | :--- |
-| **Accuracy** | 91.45% |
-| **Recall (Spoof)** | **97.15%** |
-| **ROC AUC** | **0.9704** |
-| **F1-Score** | 0.9172 |
-
-*> Note: The high Recall demonstrates the model's effectiveness in security contexts.*
 
 ## 4. Project Structure
 ```text
-src/
-├── classifier/
-│   ├── data_module/    # Dataset & Dataloader logic
-│   ├── model.py        # EfficientNet-B2 definition
-│   ├── preprocess.py   # Face detection & cropping script
-│   ├── train.py        # Main training loop
-│   ├── predict.py      # Single image inference
+cake-bank-classifier-project/
+├── data/                       # Data storage
+│   ├── raw/                    # Original dataset
+│   └── processed/              # Cropped & aligned faces (generated by preprocess.py)
+├── notebooks/
+│   ├── check_quality.ipynb     # EDA & Data check
 │   └── ...
+├── src/
+│   └── classifier/
+│       ├── data_module/        # Dataset & Dataloader logic
+│       ├── model.py            # EfficientNet-B2 architecture definition
+│       ├── preprocess.py       # Face detection (MediaPipe) & cropping pipeline
+│       ├── train.py            # Main training script (with MLflow tracking removed)
+│       ├── predict.py          # Inference script for single image demo
+│       ├── evaluations.py      # Metric calculation (F1, AUC, Recall...)
+│       └── regularizations.py  # EarlyStopping logic
+├── pyproject.toml              # Dependencies managed by uv
+├── uv.lock                     # Lock file for reproducible builds
+└── README.md                   # Project documentation
 ```
 
-## 5. How to Run
-
-### Installation
-```bash
-uv sync
-```
-
-### Preprocessing (Required first)
-```bash
-uv run src/classifier/preprocess.py
-```
-
-### Training
-```bash
-uv run -m classifier.train
-```
-
-### Inference (Demo)
-```bash
-uv run src/classifier/predict.py --image "data/raw/test/spoof/example.jpg"
-```
+## 5. Results
+The model was evaluated on the held-out Test Set (Processed):
+| Metric | Value |
+| :--- | :--- |
+| **Accuracy** | 91.88% |
+| **Recall (Spoof)** | **96.93%** |
+| **Precision** | 87.70% |
+| **ROC AUC** | **0.9787** |
+| **F1-Score** | 0.9208 |

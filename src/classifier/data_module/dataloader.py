@@ -1,11 +1,20 @@
 from pathlib import Path
 from typing import Literal
 from torch.utils.data import DataLoader
+import torch
+import numpy as np
+import random
 
 # Import class Dataset cũ của bạn
 from classifier.data_module.dataset import LivenessDataset
 # Import hàm transforms vừa tạo ở trên
 from classifier.data_module.transform import get_transforms
+
+def seed_worker(worker_id):
+    """Hàm gieo seed riêng cho từng worker con"""
+    worker_seed = torch.initial_seed() % 2**32
+    np.random.seed(worker_seed)
+    random.seed(worker_seed)
 
 class LivenessDataLoader:
     def __init__(self, 
@@ -54,7 +63,8 @@ class LivenessDataLoader:
             )
 
     def get_train_loader(self):
-        # Train luôn cần Shuffle
+        g = torch.Generator()
+        g.manual_seed(42)
         return DataLoader(
             self.train_dataset, 
             batch_size=self.batch_size, 
@@ -64,7 +74,8 @@ class LivenessDataLoader:
         )
     
     def get_dev_loader(self):
-        # Dev KHÔNG shuffle
+        g = torch.Generator()
+        g.manual_seed(42)
         return DataLoader(
             self.dev_dataset, 
             batch_size=self.batch_size, 
@@ -83,9 +94,10 @@ class LivenessDataLoader:
         )
     
     def get_samples_loader(self):
-        # Samples có thể shuffle hoặc không tùy nhu cầu xem ngẫu nhiên
+        g = torch.Generator()
+        g.manual_seed(42)
         return DataLoader(
             self.samples_dataset, 
-            batch_size=4, # Load ít thôi để xem
+            batch_size=4,
             shuffle=True
         )

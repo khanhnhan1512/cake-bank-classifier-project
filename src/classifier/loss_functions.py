@@ -1,45 +1,36 @@
-from typing import Optional
-import torch.nn.functional as F
-from torch import Tensor, nn
 import torch
-
-nn.CrossEntropyLoss
+import torch.nn as nn
+import torch.nn.functional as F
 
 class FocalLoss(nn.Module):
-    """
-    Focal Loss for handling class imbalance and hard examples.
-
-    FL(p_t) = -alpha_t * (1 - p_t)^gamma * log(p_t)
-
-    This loss focuses training on hard, misclassified examples by down-weighting
-    easy examples. Critical for improving recall on spoofed faces.
-
-    Args:
-        alpha: Weighting factor for class balance (higher = more weight on spoof class)
-        gamma: Focusing parameter (higher = more focus on hard examples)
-    """
-
-    def __init__(self, alpha=0.75, gamma=2.0):
+    def __init__(self, alpha=0.25, gamma=2.0, reduction='mean'):
+        """
+        Args:
+            alpha: Trọng số cho class hiếm (thường set là 0.25 nếu Spoof ít hơn)
+            gamma: Độ tập trung vào mẫu khó (thường là 2.0)
+        """
         super(FocalLoss, self).__init__()
         self.alpha = alpha
         self.gamma = gamma
+        self.reduction = reduction
 
-    def forward(self, input: Tensor, target: Tensor) -> Tensor:
-        """
-        Args:
-            inputs: Raw logits from model (batch_size, num_classes)
-            targets: Ground truth labels (batch_size)
-        """
-        ce_loss = F.cross_entropy(input, target, reduction='none')
-        p_t = torch.exp(-ce_loss)
+    def forward(self, inputs, targets):
+        # Cross Entropy loss cơ bản
+        ce_loss = F.cross_entropy(inputs, targets, reduction='none')
+        pt = torch.exp(-ce_loss) # Xác suất dự đoán đúng
 
-        # Apply alpha weighting
-        alpha_t = torch.where(target == 1, self.alpha, 1 - self.alpha)
+        # Focal term: (1 - pt)^gamma
+        focal_loss = (1 - pt) ** self.gamma * ce_loss
 
-        # Compute focal term: (1 - p_t)^gamma
-        focal_term = (1 - p_t) ** self.gamma
+        # Alpha weighting (nếu cần cân bằng class)
+        if self.alpha is not None:
+            # Tạo tensor alpha tương ứng với từng mẫu trong batch
+            alpha_t = self.alpha * targets + (1 - self.alpha) * (1 - targets)
+            focal_loss = alpha_t * focal_loss
 
-        # Final focal loss
-        focal_loss = alpha_t * focal_term * ce_loss
-
-        return focal_loss.mean()
+        if self.reduction == 'mean':
+            return focal_loss.mean()
+        elif self.reduction == 'sum':
+            return focal_loss.sum()
+        else:
+            return focal_loss
